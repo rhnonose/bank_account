@@ -25,7 +25,7 @@ defmodule BankAccount do
     receive do
       :closed -> :closed
 	after
-	  1000 -> flunk("Timeout")
+	  1000 -> raise "Timeout"
     end
   end
 
@@ -38,7 +38,7 @@ defmodule BankAccount do
     receive do
       {:ok, balance} -> balance
 	after
-	  1000 -> flunk("Timeout")
+	  1000 -> raise "Timeout"
     end
   end
  
@@ -51,7 +51,7 @@ defmodule BankAccount do
     receive do
       {:ok, new_value} -> new_value
 	after
-	  1000 -> flunk("Timeout")
+	  1000 -> raise "Timeout"
     end
   end 
 

@@ -37,4 +37,10 @@ defmodule BankAccountTest do
     end
     assert BankAccount.balance(account) == 20
   end
+
+  assert_raise RuntimeError, "Timeout", fn ->
+    account = BankAccount.open_bank
+    BankAccount.close_bank(account)
+    BankAccount.balance(account)
+  end
 end
