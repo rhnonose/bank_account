@@ -1,4 +1,5 @@
 defmodule BankAccount do
+  use GenServer
   @moduledoc """
   A bank account that supports access from multiple processes.
   """
@@ -11,9 +12,10 @@ defmodule BankAccount do
   @doc """
   Open the bank. Makes the account available.
   """
-  @spec open_bank() :: account
-  def open_bank() do
-    spawn_link(BankAccount, :acc, [0])
+  @spec open_bank :: account
+  def open_bank do
+    {:ok, account} = GenServer.start_link(__MODULE__, 0)
+    account
   end
 
   @doc """
@@ -21,12 +23,7 @@ defmodule BankAccount do
   """
   @spec close_bank(account) :: none
   def close_bank(account) do
-    send account, {self(), :close}
-    receive do
-      :closed -> :closed
-	after
-	  1000 -> raise "Timeout"
-    end
+    GenServer.stop account, :normal
   end
 
   @doc """
@@ -34,38 +31,22 @@ defmodule BankAccount do
   """
   @spec balance(account) :: integer
   def balance(account) do
-    send account, {self(), :balance}
-    receive do
-      {:ok, balance} -> balance
-	after
-	  1000 -> raise "Timeout"
-    end
+    GenServer.call account, :balance
   end
  
+  def handle_call(:balance, _from, balance) do
+    {:reply, balance, balance}
+  end
+
   @doc """
   Update the account's balance by adding the given amount which may be negative.
   """
-  @spec update(account, integer) :: any
+  @spec update(account, integer) :: none
   def update(account, amount) do
-    send account, {self(), :update, amount}
-    receive do
-      {:ok, new_value} -> new_value
-	after
-	  1000 -> raise "Timeout"
-    end
+    GenServer.call account, {:update, amount}
   end 
 
-  def acc(balance) do
-    receive do
-      {caller, :balance} -> 
-        send caller, {:ok, balance}
-        acc(balance)
-      {caller, :update, value} ->
-        new_value = balance + value
-        send caller, {:ok, new_value}
-        acc(new_value)
-      {caller, :close} ->
-        send caller, :closed
-    end
+  def handle_call({:update, amount}, _from, balance) do
+    {:reply, balance, balance + amount}
   end
 end
